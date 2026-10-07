@@ -14,6 +14,7 @@ SPAWN_INTERVAL_FRAMES = 90
 GAP_HEIGHT = 150
 WALL_WIDTH = 60
 SCROLL_SPEED = 3
+PIXELS_PER_METER = 10   # 10 scrolled pixels = 1 metre of distance
 
 
 class GameEngine:
@@ -26,6 +27,7 @@ class GameEngine:
         self.obstacles = []
         self.frames_until_spawn = 0
         self.game_over = False
+        self.distance_px = 0.0   # total distance travelled
 
     def _spawn_obstacle(self):
         margin = 60
@@ -44,6 +46,10 @@ class GameEngine:
         if self.game_over and key in (pygame.K_r, pygame.K_RETURN):
             self.reset()
 
+    @property
+    def distance(self):
+        return int(self.distance_px // PIXELS_PER_METER)
+
     def _hits_obstacle(self, obstacle):
         rect = self.helicopter.get_rect()
         return (rect.colliderect(obstacle.get_top_rect())
@@ -54,6 +60,7 @@ class GameEngine:
             return
 
         self.helicopter.update(HEIGHT)
+        self.distance_px += SCROLL_SPEED
 
         self.frames_until_spawn -= 1
         if self.frames_until_spawn <= 0:
@@ -69,5 +76,8 @@ class GameEngine:
     def draw(self, surface, font):
         from game import renderer
         renderer.draw_scene(surface, self.helicopter, self.obstacles)
+        renderer.draw_text(surface, font, f"Distance: {self.distance} m", (10, 10))
         if self.game_over:
-            renderer.draw_banner(surface, font, "GAME OVER  -  press R to restart")
+            renderer.draw_banner(surface, font, "GAME OVER  -  press R to restart", offset_y=-20)
+            renderer.draw_banner(surface, font, f"Final distance: {self.distance} m", offset_y=20,
+                                 color=renderer.COLOR_TEXT)
