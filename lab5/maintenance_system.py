@@ -1,6 +1,5 @@
 import json
 import os
-import logging
 import tempfile
 from datetime import datetime, timedelta
 
@@ -8,16 +7,22 @@ from datetime import datetime, timedelta
 assets = {}
 SERVICE_INTERVAL_DAYS = 90
 
+
 def register_asset(asset_id, machine_type, logs=[]):
-    assets[asset_id] = {"type": machine_type, "last_service": datetime.now().strftime("%Y-%m-%d")}
+    assets[asset_id] = {
+        "type": machine_type,
+        "last_service": datetime.now().strftime("%Y-%m-%d"),
+    }
     logs.append(asset_id)
     print("Registered", asset_id, "- total registrations this run:", len(logs))
+
 
 def update_service_date(asset_id, date):
     try:
         assets[asset_id]["last_service"] = date
-    except:
+    except KeyError:
         print("Could not update", asset_id)
+
 
 def due_for_inspection():
     due = []
@@ -27,9 +32,11 @@ def due_for_inspection():
             due.append(a)
     return due
 
+
 def change_interval(days):
     global SERVICE_INTERVAL_DAYS
     SERVICE_INTERVAL_DAYS = days
+
 
 def export_service_report(file="maintenance.json"):
     f = open(file, "w")
@@ -37,15 +44,18 @@ def export_service_report(file="maintenance.json"):
     f.close()
     print("Report written to " + file)
 
+
 def write_scratch_copy():
     fd, path = tempfile.mkstemp(suffix=".json")
     with os.fdopen(fd, "w") as f:
         f.write(json.dumps(assets))
     print("Scratch copy at", path)
 
+
 def printAlerts():
     for a in due_for_inspection():
         print("ALERT: inspection overdue for", a, assets[a]["type"])
+
 
 def main():
     register_asset("FL-01", "Forklift")
@@ -64,5 +74,6 @@ def main():
     printAlerts()
     export_service_report()
     write_scratch_copy()
+
 
 main()
